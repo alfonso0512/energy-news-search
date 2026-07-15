@@ -65,6 +65,18 @@ git clone https://github.com/alfonso0512/energy-news-search.git ~/.config/openco
 
 ---
 
+## 📚 IMA 知识库
+
+扫码加入能源领域 IMA 知识库，获取：
+
+- 📜 **政策法规与标准** — 最新能源政策、行业标准、双碳法规
+- 🏭 **行业应用与案例** — 储能/光伏/风电/氢能落地案例
+- 📰 **最新资讯** — 每日行业动态与市场分析
+
+![IMA 知识库](assets/ima-knowledge-base.jpg)
+
+---
+
 ## 许可
 
 MIT
