@@ -1,20 +1,22 @@
 # Energy News Search — 能源新闻垂直搜索 Skill
 
-> 受 [anysearch](https://github.com/anysearch-ai/anysearch-skill) 垂直搜索架构启发，专为能源领域打造的 AI Agent 搜索 Skill。
+> 8 个子域 × 60+ 新闻源。多后端自动适配，零配置开箱即用。
 
 ## 设计思想
 
+不绑定任何特定搜索后端。你有 Exa 用 Exa，有 anysearch 用 anysearch，都没有？DuckDuckGo + curl 照样搜。
+
 ```
-用户搜 "比亚迪储能大单"
+用户 "储能最新新闻"
         │
         ▼
-  识别 → storage 子域
+  子域路由 → storage（8 个专属源）
         │
         ▼
-  路由到储能专属源：OFweek储能网 / ES News / 集邦储能 / 北极星储能 ...
+  后端自适应：Exa → anysearch → Brave → websearch → DuckDuckGo
         │
         ▼
-  返回相关新闻（零噪音）
+  site: 过滤 → 精准命中能源新闻源
 ```
 
 ## 8 个子域
@@ -30,51 +32,29 @@
 | `grid` | 电网 / 特高压 / 配电网 / 虚拟电厂 | 8 |
 | `ev_battery` | 电动车 / 动力电池 / 固态电池 / 钠电 | 10 |
 
-**60+ 高质量新闻源**：国家能源局、中电联、中国能源新闻网、北极星系列、OFweek系列、集邦新能源、索比光伏、ES News、PV Magazine、Electrek、Reuters Energy、IEA、Utility Dive...
+## 兼容性
+
+| 后端 | 条件 | 体验 |
+|------|------|:--:|
+| Exa | 默认安装 | ⭐⭐⭐ |
+| Brave Search | 有 MCP / API Key | ⭐⭐ |
+| 通用搜索 | 任意 web_search | ⭐⭐ |
+| curl 直搜 | 仅 bash 可用 | ⭐ |
+
+> **不需要安装任何额外 Skill。**有 Exa 体验最好，没有也能跑。
 
 ## 安装
 
 ```bash
-# 克隆到 OpenCode skills 目录
-git clone https://github.com/YOUR_USERNAME/energy-news-search.git ~/.config/opencode/skills/energy-news-search
-
-# 也支持 Claude Code
-# git clone ... ~/.claude/skills/energy-news-search
+git clone https://github.com/alfonso0512/energy-news-search.git ~/.config/opencode/skills/energy-news-search
 ```
 
-## 使用方法
-
-Skill 会在用户查询能源新闻时自动激活。也可以手动触发：
+## 使用示例
 
 ```
-"搜一下压缩空气储能的最新进展"
-"光伏政策有什么变化？"
-"比亚迪储能最近拿了哪些大单？"
-"欧洲氢能市场近况"
-```
-
-Agent 会根据 `SKILL.md` 中的子域映射，自动路由到对应的专属新闻源，用 `site:` 过滤精准命中。
-
-## 扩展
-
-添加新源只需两步：
-
-1. 在 `references/sources.md` 对应子域下加一行
-2. 更新该子域的 `site:` 过滤串
-
-```markdown
-| 新源名称 | new-source.com | 行业垂直 | 中文 | 说明 |
-```
-
-## 文件结构
-
-```
-energy-news-search/
-├── README.md           # 本文件
-├── SKILL.md            # Skill 主文件（触发规则、使用方法）
-├── references/
-│   └── sources.md      # 源清单（等价于 anysearch 的 get_sub_domains）
-└── .gitignore
+"储能领域有什么大新闻？"       → storage 子域搜索
+"光伏和风电政策有什么变化？"    → solar + wind + policy 并行
+"比亚迪最近拿了哪些储能大单？"  → market + storage 并行
 ```
 
 ## 许可

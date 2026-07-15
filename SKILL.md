@@ -1,31 +1,46 @@
 ---
 name: energy-news-search
-description: 能源领域新闻垂直搜索。按子域（储能/光伏/风电/氢能/政策/市场/电网/电动车）路由到专属高质量新闻源，支持批量并行搜索和全文提取。学习自 anysearch 垂直搜索架构。
-version: 1.0.0
+description: 能源领域新闻垂直搜索。按子域（储能/光伏/风电/氢能/政策/市场/电网/电动车）路由到专属高质量新闻源，支持多后端自动降级，零配置开箱即用。
+version: 2.0.0
 author: 阿星
 ---
 
 ## 设计思想
 
-本 Skill 复刻 anysearch 的垂直搜索架构：
+垂直搜索路由：无论用什么后端，都能命中专属能源新闻源。
 
 ```
 用户搜 "比亚迪储能大单"
         │
         ▼
-  energy-news-search 识别 → storage 子域
+  识别 → storage 子域
         │
         ▼
-  路由到储能专属源：OFweek储能网 / ES News / 集邦储能 / 北极星储能
+  后端选择（自动降级）：
+  Exa → anysearch → Brave → websearch → DuckDuckGo
         │
         ▼
-  Exa site: 过滤 → 结构化结果
-        │
-        ▼
-  可选 webfetch 提取全文
+  site: 过滤 → 专属源 → 结构化结果
 ```
 
-**核心差异**：anysearch 后端做路由，我们用 **Exa site: 过滤 + 预定义源表** 实现等价效果。
+**核心原理**：预定义 60+ 能源新闻源 + site: 过滤串。后端只是"引擎"，源表才是"灵魂"。
+
+## 后端选择策略（自动降级）
+
+**按优先级依次尝试，用第一个可用的：**
+
+| 优先级 | 后端 | 条件 | 说明 |
+|:--:|------|------|------|
+| 1 | **Exa** | 有 `websearch_web_search_exa` | 语义搜索最强，site 过滤精准 |
+| 2 | **Brave Search** | 有 Brave MCP 或 API Key | 独立索引，免费 2,000 次/月 |
+| 3 | **通用搜索** | 有任意 web_search / webfetch | site: 过滤基本可用 |
+| 4 | **curl 直搜** | 仅 bash 可用 | 最终兜底 |
+
+**Agent 执行逻辑**：
+1. 检查可用工具列表
+2. 按优先级选第一个可用的
+3. 用 site: 过滤串 + 关键词发起搜索
+4. 全部不可用 → 提示用户安装任意搜索工具或注册 Exa/Brave 免费 Key
 
 ## 触发条件
 
@@ -54,17 +69,33 @@ author: 阿星
 
 ### 搜索
 
-```bash
-# 单子域搜索 - 用 Exa site: 过滤 + 时间范围
-web_search_exa "比亚迪储能 大单 订单 site:chuneng.ofweek.com OR site:energy-storage.news" --numResults 10
+**通用模式**（适用于所有后端）：
 
-# 多子域并行（推荐：一次摸清全貌）
-# 同时搜 storage + market + policy 三个子域
+```
+用你可用的搜索工具，搜："{关键词} site:{能源源域名1} OR site:{能源源域名2} OR ..."
 ```
 
-### 批量搜索（复刻 anysearch batch_search）
+**各后端示例**：
 
-当用户问题涉及多个能源子域时，**并行发起多个 Exa 搜索**，每个带不同 site: 过滤：
+```bash
+# Exa（最佳体验）
+web_search_exa "比亚迪储能 订单 site:chuneng.ofweek.com OR site:energy-storage.news"
+
+# Brave Search
+brave_web_search "比亚迪储能 订单 site:chuneng.ofweek.com OR site:energy-storage.news"
+
+# 通用搜索
+web_search "比亚迪储能 订单 site:chuneng.ofweek.com OR site:energy-storage.news"
+
+# curl 兜底
+curl "https://lite.duckduckgo.com/lite/?q=比亚迪储能+订单+site:chuneng.ofweek.com"
+```
+
+**site: 过滤串**在 `references/sources.md` 每个子域中已预定义，直接复用。
+
+### 批量搜索
+
+当用户问题涉及多个能源子域时，**并行发起多个搜索**：
 
 ```
 并行查询1: storage 子域 → site:chuneng.ofweek.com OR site:energy-storage.news
