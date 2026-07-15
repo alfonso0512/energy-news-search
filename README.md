@@ -57,6 +57,14 @@ git clone https://github.com/alfonso0512/energy-news-search.git ~/.config/openco
 "比亚迪最近拿了哪些储能大单？"  → market + storage 并行
 ```
 
+## 📱 关注公众号
+
+扫码关注，获取更多 **AI 使用技巧、科研经验与能源资讯**：
+
+![公众号二维码](assets/qrcode.jpg)
+
+---
+
 ## 许可
 
 MIT
